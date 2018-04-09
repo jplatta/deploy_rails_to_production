@@ -1,11 +1,11 @@
 # Deploying Ruby on Rails Application to Production
 
 ## Description
-This document is a synthesis (and not an explanation) of the steps for deploying a Ruby on Rails application using Capistrano.
+This document is a synthesis (and not an explanation) of the steps for deploying a Ruby on Rails application with a PostgreSQL database to a Linux hosting environment using Capistrano.
 
 ## Assumptions
 * Linux hosting env, e.g. Digital Ocean Droplet: Ubuntu 16.04.4 x64 
-* Ruby on Rails application versioned on Github
+* Ruby on Rails application versioned using git
 * Application uses a PostgreSQL database in production
 
 ## References 
@@ -191,19 +191,63 @@ Install Nginx:
 deploy@server:~$ sudo apt-get install curl git-core nginx -y
 ```
 
-## Database Setup: Install PostgreSQL
+## Hosting Env Setup: Intall Database
 
 Install Postgresql
+```
+deploy@server:~$ sudo apt-get install postgresql postgresql-contrib
+```
+Installation creates the linux user account postgres.
 
-Change to postgres user
+Change to postgres user:
+```
+deploy@server:~$ sudo -i -u postgres
+```
+Get a postgresql command prompt:
+```
+postgres@server:~$ psql
+```
+The prompt should look like this:
+```
+postgres=#
+```
+To exit the postgresql command prompt:
+```
+postgres=# \q
+```
+Create app_name database role:
+```
+postgres@server:~$ createuser -s app_name
+```
+Create a password for the new database role.
 
-Create app_name database role 
+Get a postgresql command prompt:
+```
+postgres@server:~$ psql
+```
+Set the password for db role app_name:
+```
+postgres=# \password app_name
+```
+Follow the prompts to set the password.
 
-Create password for app_name database role
+Quit the postgresql command prompt:
+```
+postgres=# \q
+```
+Create database with the same name as the new db role:
+```
+postgres@server:~$ createdb app_name
+```
+To connect to the new database as the postgres user:
+```
+postgres@server:~$ psql -d app_name
+```
+Set environment variable for database connection. 
 
-Create database with name "app_name"
+Set database connection details in rails config/database.yml.
 
-Test database
+## Host Env Setup: Ruby Version Manager
 
 ## Database Setup: Create app_name role on db
 
@@ -215,4 +259,4 @@ Test database
 
 ## Run Deploy Initial Process:
 
-## Future Deploys
+## Subsequent Deploys
