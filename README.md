@@ -1,4 +1,4 @@
-# deploy_rails_to_production
+# Deploying Ruby on Rails Application to Production
 
 ## Description
 This document is a synthesis (and not an explanation) of the steps for deploying a Ruby on Rails application using Capistrano.
@@ -18,38 +18,39 @@ This document is a synthesis (and not an explanation) of the steps for deploying
 ## Hosting Env Setup: Create deploy user
 Connect to your hosting env from your local machine:
 ```
-local$ ssh root@SERVER_IP
+~local$ ssh root@SERVER_IP
 ```
 Accept the warning concerning authenticity and update root password when prompted (assuming this is your first time connecting with the root user).
 
 Create a new user named "deploy":
 ```
-root: # adduser deploy
+root@server:~# adduser deploy
 ```
 Add deploy to the sudo group to give deploy root privileges:
 ```
-root: # gpasswd -a deploy sudo
+root@server:~# gpasswd -a deploy sudo
 ```
+
 ## Hosting Env Setup: Setup SSH for deploy user
 Generate keys on your local machine: 
 ```
-local$ ssh-keygen
+~local$ ssh-keygen
 ```
 Enter a file name for the new key pair when prompted. Then either choose a passphrase or leave blank when prompted. Do not share your private key.
 
-New keys stored in ssh folder:
+New keys stored in ssh directory:
 ```
-local$ cd ~/.ssh
+~local$ cd ~/.ssh
 ```
-Copy the public key to the hosting env server using ssh-copy or manually copying the public key to the hosting env server:
+Copy the public key to the hosting environment server using ssh-copy or manually copying the public key to the hosting env server:
 
 Using ssh-copy: 
 ```
-local$ ssh-copy deploy@SERVER_IP
+~local$ ssh-copy deploy@SERVER_IP
 ```
 To manually copying the key, first print the public key on your local machine:
 ```
-local$ cat ~/.ssh/test_rsa.pub
+~local$ cat ~/.ssh/test_rsa.pub
 ```
 The command should print something like:
 ```
@@ -59,42 +60,42 @@ Copy the printed statement to your clipboard.
 
 Back on the hosting env server, switch from the root user to the deploy user: 
 ```
-root: # su - deploy
+root@server:~# su - deploy
 ```
 Create an .ssh directory:
 ```
-deploy: $ mkdir ~/.ssh
+deploy@server:~$ mkdir ~/.ssh
 ```
-Set the permission on teh .ssh directory so only the owner can read, write, and execute: 
+Set the permission on the .ssh directory so only the owner can read, write, and execute: 
 ```
-deploy: $ chmod 700 ~/.ssh
+deploy@server:~$ chmod 700 ~/.ssh
 ```
 Create an authorized keys file and open the file with a text editor:
 ```
-deploy: $ mk ~/.ssh/authorized_keys
-deploy: $ vi ~/.ssh/authorized_keys
+deploy@server:~$ mk ~/.ssh/authorized_keys
+deploy@server:~$ vi ~/.ssh/authorized_keys
 ```
 Paste the public key into the authorized_keys file and save.
 
 Set the permissions on the authorized_keys file so that only owner can read and write: 
 ```
-deploy: $ chmod 600 ~/.ssh/authorized_keys
+deploy@server:~$ chmod 600 ~/.ssh/authorized_keys
 ```
 Exit the deploy user: 
 ```
-deploy: $ exit
+deploy@server:~$ exit
 ```
 From your local machine test the ssh setup for the dpeloy user: 
 ```
-local$ ssh deploy@SERVER_IP
+~local$ ssh deploy@SERVER_IP
 ```
 If the setup does not initially work, try starting the ssh-agent:
 ```
-local$ eval "$(ssh-agent -s)"
+~local$ eval "$(ssh-agent -s)"
 ```
 Then add the private key to the ssh agent:
 ```
-local$ ssh-add ~/.ssh/test_rsa
+~local$ ssh-add ~/.ssh/test_rsa
 ```
 Try connecting to deploy again.
 
@@ -103,7 +104,7 @@ Turn off remote SSH access to the root user.
 
 First open the ssh config file:
 ```
-root: # vi etc/ssh/sshd_config
+root@server:~# vi etc/ssh/sshd_config
 ```
 Find the line that looks like:
 ```
@@ -115,23 +116,94 @@ PermitRootLogin no
 ```
 Save the file and restart the ssh service:
 ```
-root: # service ssh restart
+root@server:~# service ssh restart
 ```
 Before logging off root, ssh using deploy to confirm that ssh with deploy is working:
 ```
-local$ ssh deploy@SERVER_IP
+~local$ ssh deploy@SERVER_IP
 ```
 Log off the root user:
 ```
-root: # exit
+root@server:~# exit
 ```
-## Hosting Env Setup: Add Acceptions to Firewall
 
-## Hosting Env Setup: Enable Firewall 
+## Hosting Env Setup: Setup Firewall
+Ubuntu ships with Uncomplicated Firewall(ufw).
 
-## Hosting Env Setup: 
+Log onto the deploy user:
+```
+~local$ ssh deploy@SERVER_IP
+```
+Create acceptions to the firewall policy for: 
+
+SSH - port 22
+```
+deploy@server:~$ sudo ufw allow ssh
+```
+HTTP - port 80
+```
+deploy@server:~$ sudo ufw allow 80/tcp
+```
+SSL/TLS - port 443
+```
+deploy@server: $ sudo ufw allow 443/tcp
+```
+SMTP - port 25
+```
+deploy@server:~$ sudo ufw allow 25/tcp
+```
+Confirm acceptions:
+```
+deploy@server:~$ sudo ufw show added
+```
+Enable firewall and confirm:
+```
+deploy@server:~$ sudo ufw enable
+```
+If the firewall needs to be disabled, then execute:
+```
+deploy@server:~$ sudo ufw disable
+```
+## Hosting Env Setup: Setup Timezone and NTP Sync
+Setup the server's timezone:
+```
+deploy@server:~$ sudo dpkg-reconfigure tzdata
+```
+Select appropriate values and confirm. 
+
+Setup NTP Sync:
+```
+deploy@server:~$ sudo apt-get update
+deploy@server:~$ sudo apt-get install ntp
+```
+
+## Hosting Env Setup: Setup Swap File
+Skipping for now.
+
+## Hosting Env Setup: Install Nginx
+
+Update the package index file:
+```
+deploy@server:~$ sudo apt-get update
+```
+Install Nginx:
+```
+deploy@server:~$ sudo apt-get install curl git-core nginx -y
+```
 
 ## Database Setup: Install PostgreSQL
+
+Install Postgresql
+
+Change to postgres user
+
+Create app_name database role 
+
+Create password for app_name database role
+
+Create database with name "app_name"
+
+Test database
 
 ## Database Setup: Create app_name role on db
 
