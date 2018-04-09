@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-* Digital Ocean Droplet: Ubuntu 16.04.4 x64
+* Linux hosting env, e.g. Digital Ocean Droplet: Ubuntu 16.04.4 x64 
 * Ruby on Rails application versioned on Github
 
 ## References 
@@ -14,6 +14,11 @@
 * Ref 3
 
 ## Hosting Env Setup: Create deploy user
+
+Connect to your hosting env:
+```
+local$ ssh root@SERVER_IP
+```
 
 ## Hosting Env Setup: Setup SSH for deploy user
 
@@ -30,6 +35,8 @@
 ## Database Setup: Create app_name role on db
 
 ## Database Setup:
+
+## Hosting Env Setup: Set Env variables for db
 
 ## Capistrano Setup:
 
