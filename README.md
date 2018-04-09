@@ -15,10 +15,17 @@
 
 ## Hosting Env Setup: Create deploy user
 
-Connect to your hosting env:
+Connect to your hosting env from your local machine:
 ```
 local$ ssh root@SERVER_IP
 ```
+Accept the warning concerning authenticity and update root password when prompted (assuming this is your first time connecting with the root user).
+
+Create a new user named "deploy":
+```
+root: *#* adduser deploy
+```
+
 
 ## Hosting Env Setup: Setup SSH for deploy user
 
