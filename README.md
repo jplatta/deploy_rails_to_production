@@ -243,7 +243,15 @@ To connect to the new database as the postgres user:
 ```
 postgres@server:~$ psql -d app_name
 ```
-Set environment variable for database connection. 
+Set environment variable for database connection.
+```
+deploy@server:/$ sudo vi /etc/profile
+```
+
+To test environment variables
+```
+export SECRET_KEY_BASE=GENERATED_CODE
+```
 
 Set database connection details in rails config/database.yml.
 
