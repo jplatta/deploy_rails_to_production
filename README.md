@@ -128,12 +128,14 @@ root@server:~# exit
 ```
 
 ## Hosting Env Setup: Setup Firewall
+
 Ubuntu ships with Uncomplicated Firewall(ufw).
 
 Log onto the deploy user:
 ```
 ~local$ ssh deploy@SERVER_IP
 ```
+
 Create acceptions to the firewall policy for: 
 
 SSH - port 22
@@ -164,7 +166,9 @@ If the firewall needs to be disabled, then execute:
 ```
 deploy@server:~$ sudo ufw disable
 ```
+
 ## Hosting Env Setup: Setup Timezone and NTP Sync
+
 Setup the server's timezone:
 ```
 deploy@server:~$ sudo dpkg-reconfigure tzdata
@@ -203,18 +207,6 @@ Change to postgres user:
 ```
 deploy@server:~$ sudo -i -u postgres
 ```
-Get a postgresql command prompt:
-```
-postgres@server:~$ psql
-```
-The prompt should look like this:
-```
-postgres=#
-```
-To exit the postgresql command prompt:
-```
-postgres=# \q
-```
 Create app_name database role:
 ```
 postgres@server:~$ createuser -s app_name
@@ -224,6 +216,10 @@ Create a password for the new database role.
 Get a postgresql command prompt:
 ```
 postgres@server:~$ psql
+```
+The prompt should look like this:
+```
+postgres=#
 ```
 Set the password for db role app_name:
 ```
@@ -243,19 +239,111 @@ To connect to the new database as the postgres user:
 ```
 postgres@server:~$ psql -d app_name
 ```
+
+## Host Env Setup: Ruby Version Manager
+
+First import the RVM GPG Key:
+```
+deploy@server:~$ gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+```
+Install RVM:
+```
+deploy@server:~$ curl -sSL https://get.rvm.io | bash -s stable
+```
+Load the RVM script as a function to start using it: 
+```
+deploy@server:~$ source ~/.rvm/scripts/rvm
+```
+Run the requirements command to install dependencies and files for RVM and Ruby:
+```
+deploy@server:~$ rvm requirements
+```
+To install a Ruby version:
+```
+deploy@server:~$ rvm install 2.4.0
+```
+To see which Ruby versions are installed:
+```
+deploy@server:~$ rvm list
+```
+To switch to a Ruby version:
+```
+deploy@server:~$ rvm use 2.4.0
+```
+To set a version of Ruby as the default:
+```
+deploy@server:~$ rvm use 2.4.0 --default
+```
+
+## Host Env Setup: Rails and Bundler
+
+Install rails:
+```
+deploy@server:~$ gem install rails -v '5.0.7' -V --no-ri --no-rdoc
+```
+Install bundler:
+```
+deploy@server:~$ gem install bundler -V --no-ri --no-rdoc
+```
+
+## Host Env Setup: Setup SSH with Remote Git Repo
+
+Shake hands with remote Git repo:
+```
+deploy@server:~$ ssh -T git@github.com
+```
+Create a new ssh key pair:
+```
+deploy@server:~$ ssh-keygen -t rsa
+```
+Save the the public key to the repository's deployment keys.
+
+Test the ssh setup by cloning the repo to the hosting env:
+```
+deploy@server:~$ git clone git@github.com:jplatta/svn_explorer.git
+```
+If the clone succeeds, then ssh is setup correctly. Delete the cloned repo. 
+
+##Setup Rails Application for Deployment
+
+Include the following the application's Gemfile for intalling Capistrano and Puma:
+```ruby
+group :development do
+    gem 'capistrano',         require: false
+    gem 'capistrano-rvm',     require: false
+    gem 'capistrano-rails',   require: false
+    gem 'capistrano-bundler', require: false
+    gem 'capistrano3-puma',   require: false
+end
+
+gem 'puma'
+```
+
+##Setup Capistrano for Deployment
+
+
+
+
+
+
+--Database setup stills need to symlinks to config database.yml
+--Still need to setup SECRET_KEY_BASE reference
+--Install Node
 Set environment variable for database connection.
 ```
 deploy@server:/$ sudo vi /etc/profile
 ```
-
 To test environment variables
 ```
 export SECRET_KEY_BASE=GENERATED_CODE
 ```
 
+
+
+
 Set database connection details in rails config/database.yml.
 
-## Host Env Setup: Ruby Version Manager
+
 
 ## Database Setup: Create app_name role on db
 
