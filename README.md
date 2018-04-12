@@ -9,11 +9,15 @@ This document is a synthesis (and not an explanation) of the steps for deploying
 * Application uses a PostgreSQL database in production
 
 ## References 
-* Ref 1
-  * Ref 1 - sub 
-  * Ref 1 - sub
-* Ref 2
-* Ref 3
+* [DO - Deploy Rails](https://www.digitalocean.com/community/tutorials/deploying-a-rails-app-on-ubuntu-14-04-with-capistrano-nginx-and-puma)
+* [DO - Setup PostgreSQL](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-14-04)
+* [DO - Setup Rails with PostgreSQL](https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-ruby-on-rails-application-on-ubuntu-14-04)
+* [Medium - Deploy Rails](https://medium.com/ruby-on-rails-web-application-development/how-to-deploy-ruby-on-rails-apps-to-the-internet-production-staging-49efc503c91d)
+* [Go Rails - Deploy Rails](https://gorails.com/deploy/ubuntu/16.04)
+* [Ralf Ebert - Rails Deployment](https://www.ralfebert.de/tutorials/rails-deployment/)
+* [Missing Secret Key Base](https://stackoverflow.com/questions/23180650/how-to-solve-error-missing-secret-key-base-for-production-environment-rai)
+* [Env Variables in Rails](https://railsguides.net/how-to-define-environment-variables-in-rails/)
+* [Capistrano and DatabaseYML](https://simonecarletti.com/blog/2009/06/capistrano-and-database-yml/)
 
 ## Hosting Env Setup: Create deploy user
 Connect to your hosting env from your local machine:
@@ -196,7 +200,10 @@ deploy@server:~$ sudo apt-get install curl git-core nginx -y
 ```
 
 ## Hosting Env Setup: Intall Database
-
+Make sure the Postgresql gem is included in the application's Gemfile:
+```ruby
+gem 'pg', '0.18.4'
+```
 Install Postgresql
 ```
 deploy@server:~$ sudo apt-get install postgresql postgresql-contrib
@@ -320,11 +327,11 @@ gem 'puma'
 ```
 Run bundle install:
 ```
-~local $ bundle install
+~local$ bundle install
 ```
 Install Capistrano:
 ```
-~local $ cap install
+~local$ cap install
 ```
 Update the Capfile in the root directory of the Rails app with:
 ```ruby
@@ -484,31 +491,105 @@ server {
   keepalive_timeout 10;
 }
 ```
+Update the application's config/secrets.yml to have production get the secret key base from the hosting environment's variables.
+```ruby
+# Do not keep production secrets in the repository,
+# instead read values from the environment.
+production:
+  secret_key_base: ENV["SECRET_KEY_BASE"]
+```
 
+## First Deploy of Application
 
+Commit changes to git repository:
+```
+~local$ git add -A
+~local$ git commit -m "setup for nginx, puma, and capistrano"
+~local$ git push
+```
+Run Capistrano deployment. If first deploy, then run:
+```
+~local$ cap production deploy:initial
+```
+If the deploy succeeds, ssh to the hosting enviornment. 
 
---Database setup stills need to symlinks to config database.yml
---Still need to setup SECRET_KEY_BASE reference
---Install Node
-Set environment variable for database connection.
+Get the secret key base on the production by navigating to the root folder of the current deployed version of the application:
+```
+deploy@server:~$ cd apps/svn_explorer/current
+```
+Run the following command to get a secret key base:
+```
+deploy@server:~/apps/svn_explorer/current$ RAILS_ENV=production rake secret
+```
+The command should print something like the following:
+```
+61a9f1d9e11bd835f00473a776f9ffa9afc8c8e3ab127a70fb618b964ec36f1ffa9e53c76d7d46e012508d0160d368fa95ef993d53c53e027d61b4086abb29bf
+```
+Copy the string and then open up the profile file:
 ```
 deploy@server:/$ sudo vi /etc/profile
 ```
-To test environment variables
+Add the SECREY_KEY_BASE variable to the end of the file and save:
 ```
-export SECRET_KEY_BASE=GENERATED_CODE
+export SECRET_KEY_BASE=61a9f1d9e11bd835f00473a776f9ffa9afc8c8e3ab127a70fb618b964ec36f1ffa9e53c76d7d46e012508d0160d368fa95ef993d53c53e027d61b4086abb29bf
 ```
+Check that the SECRET_KEY_BASE is successfully set:
+```
+deploy@server:/$ printenv | grep SECRET_KEY_BASE
+```
+Next update the production database credentials in the shared/config/database.yml. Navigate to:
+```
+deploy@server:~$ sudo vi /apps/svn_explorer/shared/config/database.yml
+```
+Add your production database credentials:
+```ruby
+#   gem install sqlite3
+#
+#   Ensure the SQLite 3 gem is defined in your Gemfile
+#   gem 'sqlite3'
+#
+default: &default
+  adapter: postgresql
+  pool: 5
+  timeout: 5000
 
-Set database connection details in rails config/database.yml.
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  adapter: postgresql
+  host: localhost
+  port: 5432
+  encoding: unicode
+  database: svn_ruby_test
+  pool: 5
+  username:
+  password:
 
-## Database Setup: Create app_name role on db
-
-## Database Setup:
-
-## Hosting Env Setup: Set Env variables for db
-
-## Capistrano Setup:
-
-## Run Deploy Initial Process:
+production:
+  adapter: postgresql
+  host: localhost
+  database: svn_explorer
+  pool: 5
+  username: svn_explorer
+  password: password
+```
+Restart Nginx:
+```
+eploy@server:~$ sudo service nginx restart
+```
 
 ## Subsequent Deploys
+
+Push changes to git repo:
+```
+~local$ git add -A
+~local$ git commit -m "pushing recent changes"
+~local$ git push
+```
+Run Capistrano deployment from the application's root directory on your local machine:
+```
+~local$ cap production deploy
+```
+If deploy fails, then check deployment logs:
+If application is inaccessible after deploy, then check the puma logs:
