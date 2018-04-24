@@ -457,7 +457,7 @@ This code creates symlinks for storing database credentials in a shared folder o
 
 In order for this to work, the config/database.yml needs to be added to the .gitignore file on your local machine.
 
-Next configure Nginx in conf/nginx.conf:
+Next configure Nginx in config/nginx.conf:
 ```conf
 upstream puma {
   server unix:///home/deploy/apps/svn_explorer/shared/tmp/sockets/svn_explorer-puma.sock;
